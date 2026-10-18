@@ -139,9 +139,9 @@
         </div>
     </div>
 
-    <!-- Product Detail Modal -->
+    <!-- Product Detail Modal (With Multi-Image Gallery) -->
     <div id="productModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl relative animate-in zoom-in-95 duration-200">
+        <div class="bg-white rounded-3xl max-w-sm w-full overflow-hidden shadow-2xl relative animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <button onclick="closeProductModal()" class="absolute top-3 right-3 z-10 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70">
                 <i class="fa-solid fa-xmark text-sm"></i>
             </button>
@@ -149,6 +149,12 @@
                 <img id="modalImg" src="" alt="Product" class="w-full h-full object-cover">
                 <span id="modalDiscountTag" class="absolute bottom-3 left-3 bg-brand-gold text-white text-xs px-2.5 py-1 rounded-lg font-bold shadow-md"></span>
             </div>
+            
+            <!-- Thumbnail Gallery Strip -->
+            <div id="modalThumbnails" class="flex space-x-2 p-3 bg-gray-50 overflow-x-auto hide-scrollbar border-b border-gray-100">
+                <!-- Thumbnails render here -->
+            </div>
+
             <div class="p-5 space-y-3">
                 <div>
                     <span id="modalCategory" class="text-xs font-semibold text-brand uppercase tracking-wider"></span>
@@ -182,15 +188,16 @@
                 </button>
             </div>
             <div id="adminLoginSection" class="space-y-3">
-                <p class="text-xs text-gray-500">Enter PIN (1234) to manage collection stock.</p>
+                <p class="text-xs text-gray-500">Enter Admin PIN to manage collection stock.</p>
                 <input type="password" id="adminPinInput" placeholder="Enter PIN" class="w-full bg-gray-100 text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/30">
                 <button onclick="verifyAdminPin()" class="w-full bg-brand text-white py-2.5 rounded-xl font-bold text-sm shadow-sm">Login</button>
             </div>
             <div id="adminDashboardSection" class="space-y-3 hidden">
                 <div class="bg-brand-light p-3 rounded-xl border border-brand/20">
                     <p class="text-xs font-bold text-brand">Add New Collection Item</p>
+                    <p class="text-[10px] text-gray-500 mt-0.5">Separate multiple image links with commas</p>
                 </div>
-                <input type="text" id="addName" placeholder="Product Name (e.g., Embroidered Suit)" class="w-full bg-gray-100 text-xs px-3 py-2.5 rounded-xl">
+                <input type="text" id="addName" placeholder="Product Name" class="w-full bg-gray-100 text-xs px-3 py-2.5 rounded-xl">
                 <select id="addCategory" class="w-full bg-gray-100 text-xs px-3 py-2.5 rounded-xl">
                     <option value="Suits">Suits</option>
                     <option value="Sarees">Sarees</option>
@@ -201,9 +208,9 @@
                     <input type="number" id="addPrice" placeholder="Sale Price (₹)" class="bg-gray-100 text-xs px-3 py-2.5 rounded-xl">
                     <input type="number" id="addOldPrice" placeholder="Original Price (₹)" class="bg-gray-100 text-xs px-3 py-2.5 rounded-xl">
                 </div>
-                <input type="text" id="addSizes" placeholder="Sizes (e.g., M, L, XL, XXL)" class="w-full bg-gray-100 text-xs px-3 py-2.5 rounded-xl">
-                <input type="text" id="addFabric" placeholder="Fabric details (e.g., Pure Cotton)" class="w-full bg-gray-100 text-xs px-3 py-2.5 rounded-xl">
-                <input type="text" id="addImage" placeholder="Image URL (Imgur / ImgBB link)" class="w-full bg-gray-100 text-xs px-3 py-2.5 rounded-xl">
+                <input type="text" id="addSizes" placeholder="Sizes (e.g., M-38, L-40, XL-42)" class="w-full bg-gray-100 text-xs px-3 py-2.5 rounded-xl">
+                <input type="text" id="addFabric" placeholder="Fabric details" class="w-full bg-gray-100 text-xs px-3 py-2.5 rounded-xl">
+                <textarea id="addImage" placeholder="Image URL(s) - e.g. https://i.ibb.co/pic1.jpg, https://i.ibb.co/pic2.jpg" class="w-full bg-gray-100 text-xs p-3 rounded-xl h-20"></textarea>
                 <button onclick="addNewProduct()" class="w-full bg-brand text-white py-2.5 rounded-xl font-bold text-xs shadow-sm">Publish Product</button>
                 <hr class="border-gray-100 my-2">
                 <button onclick="resetDefaultProducts()" class="w-full bg-gray-100 text-gray-600 py-2 rounded-xl text-xs font-medium">Reset Default Catalog</button>
@@ -238,14 +245,14 @@
                 oldPrice: 2300,
                 sizes: ["M-38", "L-40", "XL-42", "XXL-44"],
                 fabric: "Pure Heavy Ho Silk with Long Embroidery Work",
-                image: "https://i.ibb.co/bjrt5KZp/Whats-App-Image-2026-10-18-at-2-07-50-PM.jpg"
+                images: ["https://i.ibb.co/bjrt5KZp/Whats-App-Image-2026-10-18-at-2-07-50-PM.jpg"]
             }
         ];
 
-        // Clear local storage cache to force new updates immediately
-        if (!localStorage.getItem('naaz_catalog_v4_logo')) {
+        // Storage clear key for gallery feature
+        if (!localStorage.getItem('naaz_catalog_v5_multi_img')) {
             localStorage.removeItem('naaz_products');
-            localStorage.setItem('naaz_catalog_v4_logo', 'true');
+            localStorage.setItem('naaz_catalog_v5_multi_img', 'true');
         }
 
         let products = JSON.parse(localStorage.getItem('naaz_products')) || defaultProducts;
@@ -259,6 +266,12 @@
             localStorage.setItem('naaz_cart', JSON.stringify(cart));
         }
 
+        function getImages(product) {
+            if (Array.isArray(product.images) && product.images.length > 0) return product.images;
+            if (product.image) return [product.image];
+            return ["https://via.placeholder.com/400"];
+        }
+
         function renderProducts(items = products) {
             const grid = document.getElementById('productGrid');
             document.getElementById('productCount').innerText = `${items.length} items`;
@@ -270,11 +283,12 @@
 
             grid.innerHTML = items.map(p => {
                 const discount = Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100);
+                const mainImg = getImages(p)[0];
                 return `
                     <div onclick="openProductModal(${p.id})" class="bg-white rounded-2xl p-2.5 shadow-sm border border-gray-100 flex flex-col justify-between cursor-pointer hover:shadow-md transition">
                         <div>
                             <div class="relative h-44 rounded-xl overflow-hidden bg-gray-100 mb-2">
-                                <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover">
+                                <img src="${mainImg}" alt="${p.name}" class="w-full h-full object-cover">
                                 <span class="absolute top-2 left-2 bg-brand-gold text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow">-${discount}%</span>
                             </div>
                             <span class="text-[10px] font-semibold text-brand uppercase tracking-wider">${p.category}</span>
@@ -322,7 +336,9 @@
             selectedProduct = products.find(p => p.id === id);
             selectedSize = selectedProduct.sizes[0] || 'Standard';
 
-            document.getElementById('modalImg').src = selectedProduct.image;
+            const imgList = getImages(selectedProduct);
+
+            document.getElementById('modalImg').src = imgList[0];
             document.getElementById('modalCategory').innerText = selectedProduct.category;
             document.getElementById('modalName').innerText = selectedProduct.name;
             document.getElementById('modalPrice').innerText = selectedProduct.price;
@@ -332,12 +348,29 @@
             const disc = Math.round(((selectedProduct.oldPrice - selectedProduct.price) / selectedProduct.oldPrice) * 100);
             document.getElementById('modalDiscountTag').innerText = `${disc}% OFF`;
 
+            // Render Thumbnails
+            const thumbContainer = document.getElementById('modalThumbnails');
+            if (imgList.length > 1) {
+                thumbContainer.classList.remove('hidden');
+                thumbContainer.innerHTML = imgList.map((url, i) => `
+                    <img src="${url}" onclick="setModalMainImage('${url}', this)" class="thumb-img w-12 h-12 object-cover rounded-lg border-2 cursor-pointer transition ${i === 0 ? 'border-brand' : 'border-gray-200'}">
+                `).join('');
+            } else {
+                thumbContainer.classList.add('hidden');
+            }
+
             const sizesDiv = document.getElementById('modalSizes');
             sizesDiv.innerHTML = selectedProduct.sizes.map(s => `
                 <button onclick="selectSize('${s}')" class="size-btn px-2.5 py-1 rounded-xl text-xs font-bold border ${s === selectedSize ? 'bg-brand text-white border-brand' : 'bg-gray-50 text-gray-700 border-gray-200'}">${s}</button>
             `).join('');
 
             document.getElementById('productModal').classList.remove('hidden');
+        }
+
+        function setModalMainImage(url, element) {
+            document.getElementById('modalImg').src = url;
+            document.querySelectorAll('.thumb-img').forEach(t => t.className = "thumb-img w-12 h-12 object-cover rounded-lg border-2 border-gray-200 cursor-pointer transition");
+            element.className = "thumb-img w-12 h-12 object-cover rounded-lg border-2 border-brand cursor-pointer transition";
         }
 
         function selectSize(size) {
@@ -357,6 +390,7 @@
         }
 
         function addToCartFromModal() {
+            const mainImg = getImages(selectedProduct)[0];
             const existing = cart.find(item => item.id === selectedProduct.id && item.size === selectedSize);
             if(existing) {
                 existing.qty += 1;
@@ -365,7 +399,7 @@
                     id: selectedProduct.id,
                     name: selectedProduct.name,
                     price: selectedProduct.price,
-                    image: selectedProduct.image,
+                    image: mainImg,
                     size: selectedSize,
                     qty: 1
                 });
@@ -466,12 +500,13 @@
 
         function verifyAdminPin() {
             const pin = document.getElementById('adminPinInput').value;
-            if(pin === '9693') {
+            // You can change '1234' here to your personal secret PIN
+            if(pin === '1234') { 
                 document.getElementById('adminLoginSection').classList.add('hidden');
                 document.getElementById('adminDashboardSection').classList.remove('hidden');
                 showToast("Admin access granted!");
             } else {
-                alert('Incorrect PIN! Try 1234');
+                alert('Incorrect PIN!');
             }
         }
 
@@ -482,23 +517,32 @@
             const oldPrice = Number(document.getElementById('addOldPrice').value);
             const sizes = document.getElementById('addSizes').value.split(',').map(s => s.trim());
             const fabric = document.getElementById('addFabric').value;
-            const image = document.getElementById('addImage').value;
+            const rawImages = document.getElementById('addImage').value;
 
-            if(!name || !price || !image) {
-                alert('Please fill out Name, Price, and Image URL!');
+            if(!name || !price || !rawImages) {
+                alert('Please fill out Name, Price, and Image URL(s)!');
                 return;
             }
 
+            // Parse comma-separated image URLs into an array
+            const images = rawImages.split(',').map(url => url.trim()).filter(url => url.length > 0);
+
             const newProd = {
                 id: Date.now(),
-                name, category, price, oldPrice: oldPrice || Math.round(price * 1.5), sizes: sizes.length ? sizes : ['Standard'], fabric: fabric || 'Premium Boutique Fabric', image
+                name, 
+                category, 
+                price, 
+                oldPrice: oldPrice || Math.round(price * 1.5), 
+                sizes: sizes.length ? sizes : ['Standard'], 
+                fabric: fabric || 'Premium Boutique Fabric', 
+                images
             };
 
             products.unshift(newProd);
             saveToStorage();
             renderProducts();
             closeAdminModal();
-            showToast("Product published successfully!");
+            showToast("Product published with image gallery!");
 
             document.getElementById('addName').value = '';
             document.getElementById('addPrice').value = '';
