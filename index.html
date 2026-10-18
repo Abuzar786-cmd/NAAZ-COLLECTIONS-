@@ -229,7 +229,18 @@
     <script>
         const SHOP_WHATSAPP = "919304428402";
 
-        const defaultProducts = [];
+        const defaultProducts = [const defaultProducts = [
+            {
+                id: 1,
+                name: "*DESIRABLE FANCY PURE HEAVY HO SILK AND LONG EMBROIDERY WORK TOP AND PLAZO PANT WITH DUPATTA*",
+                category: "Suits", 
+                price: 1750, 
+                oldPrice: 2300, 
+                sizes: ["M-38" ,"L-40" ,"XL-42" ,"XXL-44"],
+                fabric: "PURE HO SILK",
+                image: "https://i.ibb.co/bjrt5KZp/Whats-App-Image-2026-10-18-at-2-07-50-PM.jpg" // Paste her ImgBB link here
+            }
+        ];];
 
         let products = JSON.parse(localStorage.getItem('naaz_products')) || defaultProducts;
         let cart = JSON.parse(localStorage.getItem('naaz_cart')) || [];
