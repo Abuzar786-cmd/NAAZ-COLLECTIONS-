@@ -43,8 +43,8 @@
     <header class="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-100">
         <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center space-x-2.5">
-                <!-- LOGO IMAGE (PRE-CONFIGURED) -->
-                <img src="https://i.ibb.co/mVDLRSLX/LOGO.jpg" alt="Naaz Collections Logo" class="w-10 h-10 object-cover rounded-full border border-gray-200">
+                <!-- LOGO IMAGE -->
+                <img src="https://i.ibb.co/mC210D50/WhatsApp-Image-2026-10-18-at-1-09-18-PM.jpg" alt="Naaz Collections Logo" class="w-10 h-10 object-cover rounded-full border border-gray-200">
                 <div>
                     <h1 class="font-bold text-gray-900 leading-tight">NAAZ COLLECTIONS</h1>
                     <p class="text-[10px] text-gray-500 tracking-wider uppercase font-semibold">Boutique & Fashion</p>
@@ -229,18 +229,24 @@
     <script>
         const SHOP_WHATSAPP = "919304428402";
 
-        const defaultProducts = [const defaultProducts = [
+        const defaultProducts = [
             {
                 id: 1,
-                name: "*DESIRABLE FANCY PURE HEAVY HO SILK AND LONG EMBROIDERY WORK TOP AND PLAZO PANT WITH DUPATTA*",
-                category: "Suits", 
-                price: 1750, 
-                oldPrice: 2300, 
-                sizes: ["M-38" ,"L-40" ,"XL-42" ,"XXL-44"],
-                fabric: "PURE HO SILK",
-                image: "https://i.ibb.co/bjrt5KZp/Whats-App-Image-2026-10-18-at-2-07-50-PM.jpg" // Paste her ImgBB link here
+                name: "Desirable Fancy Pure Heavy Ho Silk Long Embroidery Top & Plazo Pant with Dupatta",
+                category: "Suits",
+                price: 1750,
+                oldPrice: 2300,
+                sizes: ["M-38", "L-40", "XL-42", "XXL-44"],
+                fabric: "Pure Heavy Ho Silk with Long Embroidery Work",
+                image: "https://i.ibb.co/bjrt5KZp/Whats-App-Image-2026-10-18-at-2-07-50-PM.jpg"
             }
-        ];];
+        ];
+
+        // Clear local storage on first load so the fresh catalog shows up immediately
+        if (!localStorage.getItem('naaz_catalog_initialized_v2')) {
+            localStorage.removeItem('naaz_products');
+            localStorage.setItem('naaz_catalog_initialized_v2', 'true');
+        }
 
         let products = JSON.parse(localStorage.getItem('naaz_products')) || defaultProducts;
         let cart = JSON.parse(localStorage.getItem('naaz_cart')) || [];
@@ -272,7 +278,7 @@
                                 <span class="absolute top-2 left-2 bg-brand-gold text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow">-${discount}%</span>
                             </div>
                             <span class="text-[10px] font-semibold text-brand uppercase tracking-wider">${p.category}</span>
-                            <h3 class="font-bold text-gray-900 text-xs line-clamp-1 mt-0.5">${p.name}</h3>
+                            <h3 class="font-bold text-gray-900 text-xs line-clamp-2 mt-0.5">${p.name}</h3>
                         </div>
                         <div class="mt-2 pt-2 border-t border-gray-50 flex items-center justify-between">
                             <div>
@@ -304,7 +310,7 @@
             const query = document.getElementById('searchInput').value.toLowerCase();
             let filtered = products;
             if(currentCategory !== 'All') {
-                filtered = filtered.filter(p => p.category === currentCategory);
+                filtered = filtered.filter(p => p.category.toLowerCase() === currentCategory.toLowerCase());
             }
             if(query) {
                 filtered = filtered.filter(p => p.name.toLowerCase().includes(query) || p.fabric.toLowerCase().includes(query));
@@ -328,7 +334,7 @@
 
             const sizesDiv = document.getElementById('modalSizes');
             sizesDiv.innerHTML = selectedProduct.sizes.map(s => `
-                <button onclick="selectSize('${s}')" class="size-btn px-3.5 py-1.5 rounded-xl text-xs font-bold border ${s === selectedSize ? 'bg-brand text-white border-brand' : 'bg-gray-50 text-gray-700 border-gray-200'}">${s}</button>
+                <button onclick="selectSize('${s}')" class="size-btn px-2.5 py-1 rounded-xl text-xs font-bold border ${s === selectedSize ? 'bg-brand text-white border-brand' : 'bg-gray-50 text-gray-700 border-gray-200'}">${s}</button>
             `).join('');
 
             document.getElementById('productModal').classList.remove('hidden');
@@ -339,9 +345,9 @@
             const buttons = document.querySelectorAll('.size-btn');
             buttons.forEach(btn => {
                 if(btn.innerText === size) {
-                    btn.className = "size-btn px-3.5 py-1.5 rounded-xl text-xs font-bold border bg-brand text-white border-brand";
+                    btn.className = "size-btn px-2.5 py-1 rounded-xl text-xs font-bold border bg-brand text-white border-brand";
                 } else {
-                    btn.className = "size-btn px-3.5 py-1.5 rounded-xl text-xs font-bold border bg-gray-50 text-gray-700 border-gray-200";
+                    btn.className = "size-btn px-2.5 py-1 rounded-xl text-xs font-bold border bg-gray-50 text-gray-700 border-gray-200";
                 }
             });
         }
