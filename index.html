@@ -243,9 +243,9 @@
         ];
 
         // Clear local storage on first load so the fresh catalog shows up immediately
-        if (!localStorage.getItem('naaz_catalog_initialized_v2')) {
+        if (!localStorage.getItem('naaz_catalog_initialized_v3')) {
             localStorage.removeItem('naaz_products');
-            localStorage.setItem('naaz_catalog_initialized_v2', 'true');
+            localStorage.setItem('naaz_catalog_initialized_v3', 'true');
         }
 
         let products = JSON.parse(localStorage.getItem('naaz_products')) || defaultProducts;
