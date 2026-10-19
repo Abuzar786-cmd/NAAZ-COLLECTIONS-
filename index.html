@@ -85,7 +85,7 @@
         </div>
 
         <div id="productGrid" class="grid grid-cols-2 gap-3">
-            <!-- Dynamic Products Inserted Here -->
+            <!-- Dynamic Products Rendered Here -->
         </div>
 
     </main>
@@ -150,9 +150,9 @@
                 <span id="modalDiscountTag" class="absolute bottom-3 left-3 bg-brand-gold text-white text-xs px-2.5 py-1 rounded-lg font-bold shadow-md"></span>
             </div>
             
-            <!-- Thumbnail Gallery Strip -->
+            <!-- Multi-Image Thumbnail Strip -->
             <div id="modalThumbnails" class="flex space-x-2 p-3 bg-gray-50 overflow-x-auto hide-scrollbar border-b border-gray-100">
-                <!-- Thumbnails render here -->
+                <!-- Clickable thumbnails render here dynamically -->
             </div>
 
             <div class="p-5 space-y-3">
@@ -188,13 +188,13 @@
                 </button>
             </div>
             <div id="adminLoginSection" class="space-y-3">
-                <p class="text-xs text-gray-500">Enter Admin PIN to manage collection stock.</p>
+                <p class="text-xs text-gray-500">Enter Admin PIN to manage local preview.</p>
                 <input type="password" id="adminPinInput" placeholder="Enter PIN" class="w-full bg-gray-100 text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/30">
                 <button onclick="verifyAdminPin()" class="w-full bg-brand text-white py-2.5 rounded-xl font-bold text-sm shadow-sm">Login</button>
             </div>
             <div id="adminDashboardSection" class="space-y-3 hidden">
                 <div class="bg-brand-light p-3 rounded-xl border border-brand/20">
-                    <p class="text-xs font-bold text-brand">Add New Collection Item</p>
+                    <p class="text-xs font-bold text-brand">Add New Item (Local Preview)</p>
                     <p class="text-[10px] text-gray-500 mt-0.5">Separate multiple image links with commas</p>
                 </div>
                 <input type="text" id="addName" placeholder="Product Name" class="w-full bg-gray-100 text-xs px-3 py-2.5 rounded-xl">
@@ -211,9 +211,7 @@
                 <input type="text" id="addSizes" placeholder="Sizes (e.g., M-38, L-40, XL-42)" class="w-full bg-gray-100 text-xs px-3 py-2.5 rounded-xl">
                 <input type="text" id="addFabric" placeholder="Fabric details" class="w-full bg-gray-100 text-xs px-3 py-2.5 rounded-xl">
                 <textarea id="addImage" placeholder="Image URL(s) - e.g. https://i.ibb.co/pic1.jpg, https://i.ibb.co/pic2.jpg" class="w-full bg-gray-100 text-xs p-3 rounded-xl h-20"></textarea>
-                <button onclick="addNewProduct()" class="w-full bg-brand text-white py-2.5 rounded-xl font-bold text-xs shadow-sm">Publish Product</button>
-                <hr class="border-gray-100 my-2">
-                <button onclick="resetDefaultProducts()" class="w-full bg-gray-100 text-gray-600 py-2 rounded-xl text-xs font-medium">Reset Default Catalog</button>
+                <button onclick="addNewProduct()" class="w-full bg-brand text-white py-2.5 rounded-xl font-bold text-xs shadow-sm">Add Item</button>
             </div>
         </div>
     </div>
@@ -236,7 +234,25 @@
     <script>
         const SHOP_WHATSAPP = "919304428402";
 
+        // ==============================================================
+        // 🛍️ PERMANENT CATALOG (MULTIPLE IMAGES SUPPORTED VIA ARRAY)
+        // ==============================================================
         const defaultProducts = [
+            {
+                id: 2,
+                name: "Chiffon heavy embroidery with Hand latkan frech silk",
+                category: "Suits",
+                price: 2150,
+                oldPrice: 2500,
+                sizes: ["Semi Stitched"],
+                fabric: "Chiffon Heavy with Hand Latkan French Silk",
+                images: [
+                    "https://i.ibb.co/Q38F4hqk/Whats-App-Image-2026-10-18-at-5-59-46-PM-1.jpg",
+                    "https://i.ibb.co/20jbnpTL/Whats-App-Image-2026-10-18-at-5-59-46-PM.jpg",
+                    "https://i.ibb.co/nsJgY3DT/Whats-App-Image-2026-10-18-at-5-59-45-PM-1.jpg",
+                    "https://i.ibb.co/fdh3V3tq/Whats-App-Image-2026-10-18-at-5-59-45-PM.jpg"
+                ]
+            },
             {
                 id: 1,
                 name: "Desirable Fancy Pure Heavy Ho Silk Long Embroidery Top & Plazo Pant with Dupatta",
@@ -245,27 +261,23 @@
                 oldPrice: 2300,
                 sizes: ["M-38", "L-40", "XL-42", "XXL-44"],
                 fabric: "Pure Heavy Ho Silk with Long Embroidery Work",
-                images: ["https://i.ibb.co/bjrt5KZp/Whats-App-Image-2026-10-18-at-2-07-50-PM.jpg"]
+                images: [
+                    "https://i.ibb.co/bjrt5KZp/Whats-App-Image-2026-10-18-at-2-07-50-PM.jpg"
+                ]
             }
         ];
 
-        // Storage clear key for gallery feature
-        if (!localStorage.getItem('naaz_catalog_v5_multi_img')) {
-            localStorage.removeItem('naaz_products');
-            localStorage.setItem('naaz_catalog_v5_multi_img', 'true');
-        }
-
-        let products = JSON.parse(localStorage.getItem('naaz_products')) || defaultProducts;
+        let products = [...defaultProducts];
         let cart = JSON.parse(localStorage.getItem('naaz_cart')) || [];
         let currentCategory = 'All';
         let selectedProduct = null;
         let selectedSize = '';
 
-        function saveToStorage() {
-            localStorage.setItem('naaz_products', JSON.stringify(products));
+        function saveCartToStorage() {
             localStorage.setItem('naaz_cart', JSON.stringify(cart));
         }
 
+        // Helper to retrieve images as an array
         function getImages(product) {
             if (Array.isArray(product.images) && product.images.length > 0) return product.images;
             if (product.image) return [product.image];
@@ -282,14 +294,14 @@
             }
 
             grid.innerHTML = items.map(p => {
-                const discount = Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100);
+                const discount = p.oldPrice && p.price ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100) : 0;
                 const mainImg = getImages(p)[0];
                 return `
                     <div onclick="openProductModal(${p.id})" class="bg-white rounded-2xl p-2.5 shadow-sm border border-gray-100 flex flex-col justify-between cursor-pointer hover:shadow-md transition">
                         <div>
                             <div class="relative h-44 rounded-xl overflow-hidden bg-gray-100 mb-2">
                                 <img src="${mainImg}" alt="${p.name}" class="w-full h-full object-cover">
-                                <span class="absolute top-2 left-2 bg-brand-gold text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow">-${discount}%</span>
+                                ${discount > 0 ? `<span class="absolute top-2 left-2 bg-brand-gold text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow">-${discount}%</span>` : ''}
                             </div>
                             <span class="text-[10px] font-semibold text-brand uppercase tracking-wider">${p.category}</span>
                             <h3 class="font-bold text-gray-900 text-xs line-clamp-2 mt-0.5">${p.name}</h3>
@@ -297,7 +309,7 @@
                         <div class="mt-2 pt-2 border-t border-gray-50 flex items-center justify-between">
                             <div>
                                 <span class="text-sm font-bold text-gray-900">₹${p.price}</span>
-                                <span class="text-[10px] text-gray-400 line-through ml-1">₹${p.oldPrice}</span>
+                                ${p.oldPrice ? `<span class="text-[10px] text-gray-400 line-through ml-1">₹${p.oldPrice}</span>` : ''}
                             </div>
                             <button class="bg-brand/10 text-brand w-7 h-7 rounded-lg flex items-center justify-center hover:bg-brand hover:text-white transition">
                                 <i class="fa-solid fa-plus text-xs"></i>
@@ -327,11 +339,12 @@
                 filtered = filtered.filter(p => p.category.toLowerCase() === currentCategory.toLowerCase());
             }
             if(query) {
-                filtered = filtered.filter(p => p.name.toLowerCase().includes(query) || p.fabric.toLowerCase().includes(query));
+                filtered = filtered.filter(p => p.name.toLowerCase().includes(query) || (p.fabric && p.fabric.toLowerCase().includes(query)));
             }
             renderProducts(filtered);
         }
 
+        // Open Modal and render image thumbnails gallery
         function openProductModal(id) {
             selectedProduct = products.find(p => p.id === id);
             selectedSize = selectedProduct.sizes[0] || 'Standard';
@@ -342,13 +355,13 @@
             document.getElementById('modalCategory').innerText = selectedProduct.category;
             document.getElementById('modalName').innerText = selectedProduct.name;
             document.getElementById('modalPrice').innerText = selectedProduct.price;
-            document.getElementById('modalOldPrice').innerText = selectedProduct.oldPrice;
-            document.getElementById('modalFabric').innerHTML = `<i class="fa-solid fa-feather text-brand mr-1.5"></i> ${selectedProduct.fabric}`;
+            document.getElementById('modalOldPrice').innerText = selectedProduct.oldPrice || selectedProduct.price;
+            document.getElementById('modalFabric').innerHTML = `<i class="fa-solid fa-feather text-brand mr-1.5"></i> ${selectedProduct.fabric || 'Boutique Wear'}`;
             
-            const disc = Math.round(((selectedProduct.oldPrice - selectedProduct.price) / selectedProduct.oldPrice) * 100);
+            const disc = selectedProduct.oldPrice ? Math.round(((selectedProduct.oldPrice - selectedProduct.price) / selectedProduct.oldPrice) * 100) : 0;
             document.getElementById('modalDiscountTag').innerText = `${disc}% OFF`;
 
-            // Render Thumbnails
+            // Render Thumbnails Gallery Strip
             const thumbContainer = document.getElementById('modalThumbnails');
             if (imgList.length > 1) {
                 thumbContainer.classList.remove('hidden');
@@ -367,6 +380,7 @@
             document.getElementById('productModal').classList.remove('hidden');
         }
 
+        // Switch main photo when clicking thumbnails
         function setModalMainImage(url, element) {
             document.getElementById('modalImg').src = url;
             document.querySelectorAll('.thumb-img').forEach(t => t.className = "thumb-img w-12 h-12 object-cover rounded-lg border-2 border-gray-200 cursor-pointer transition");
@@ -404,7 +418,7 @@
                     qty: 1
                 });
             }
-            saveToStorage();
+            saveCartToStorage();
             updateCartUI();
             closeProductModal();
             showToast("Added to cart successfully!");
@@ -459,7 +473,7 @@
             if(cart[index].qty <= 0) {
                 cart.splice(index, 1);
             }
-            saveToStorage();
+            saveCartToStorage();
             updateCartUI();
         }
 
@@ -500,8 +514,7 @@
 
         function verifyAdminPin() {
             const pin = document.getElementById('adminPinInput').value;
-            // You can change '1234' here to your personal secret PIN
-            if(pin === '2004') { 
+            if(pin === '1234') { 
                 document.getElementById('adminLoginSection').classList.add('hidden');
                 document.getElementById('adminDashboardSection').classList.remove('hidden');
                 showToast("Admin access granted!");
@@ -524,7 +537,6 @@
                 return;
             }
 
-            // Parse comma-separated image URLs into an array
             const images = rawImages.split(',').map(url => url.trim()).filter(url => url.length > 0);
 
             const newProd = {
@@ -539,10 +551,9 @@
             };
 
             products.unshift(newProd);
-            saveToStorage();
             renderProducts();
             closeAdminModal();
-            showToast("Product published with image gallery!");
+            showToast("Item added to local preview!");
 
             document.getElementById('addName').value = '';
             document.getElementById('addPrice').value = '';
@@ -550,16 +561,6 @@
             document.getElementById('addSizes').value = '';
             document.getElementById('addFabric').value = '';
             document.getElementById('addImage').value = '';
-        }
-
-        function resetDefaultProducts() {
-            if(confirm('Reset catalog to default items?')) {
-                products = defaultProducts;
-                saveToStorage();
-                renderProducts();
-                closeAdminModal();
-                showToast("Catalog reset!");
-            }
         }
 
         function showToast(msg) {
